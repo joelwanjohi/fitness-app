@@ -1,6 +1,36 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Workout Timer App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: WorkoutPage(),
+    );
+  }
+}
+
+// Create a class to store body part timer preferences
+class BodyPartTimerPreferences {
+  static final Map<String, int> timerDurations = {
+    'Chest': 60,    // Default 1 minute (60 seconds)
+    'Legs': 60,     // Default 1 minute
+    'Abs': 60,      // Default 1 minute
+    'Shoulder': 60, // Default 1 minute
+    'Biceps': 60,   // Default 1 minute
+    'Neck': 60,     // Default 1 minute
+  };
+}
+
 class WorkoutPage extends StatefulWidget {
   @override
   _WorkoutPageState createState() => _WorkoutPageState();
@@ -54,6 +84,9 @@ class _WorkoutPageState extends State<WorkoutPage> {
   }
 
   Widget _createBodyPartTile(BuildContext context, String bodyPart, IconData icon) {
+    // Get the saved duration for this body part (for display purposes)
+    int durationInMinutes = BodyPartTimerPreferences.timerDurations[bodyPart]! ~/ 60;
+    
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -61,6 +94,7 @@ class _WorkoutPageState extends State<WorkoutPage> {
           MaterialPageRoute(
             builder: (context) => ExercisePage(
               exerciseName: '$bodyPart Exercise',
+              bodyPart: bodyPart, // Pass the body part
               onCaloriesBurned: (calories) {
                 setState(() {
                   _totalCaloriesBurned += calories;
@@ -89,6 +123,14 @@ class _WorkoutPageState extends State<WorkoutPage> {
                 ),
               ),
             ),
+            // Show the current timer setting for this body part
+            Text(
+              '$durationInMinutes min',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[700],
+              ),
+            ),
           ],
         ),
       ),
@@ -98,10 +140,12 @@ class _WorkoutPageState extends State<WorkoutPage> {
 
 class ExercisePage extends StatefulWidget {
   final String exerciseName;
+  final String bodyPart;
   final ValueChanged<double> onCaloriesBurned;
 
   ExercisePage({
     required this.exerciseName,
+    required this.bodyPart,
     required this.onCaloriesBurned,
   });
 
@@ -110,16 +154,25 @@ class ExercisePage extends StatefulWidget {
 }
 
 class _ExercisePageState extends State<ExercisePage> {
-  late Timer _timer;
+  Timer? _timer;
   int _elapsedSeconds = 0;
-  final int _totalDurationInSeconds = 60; // 5 minutes exercise duration
-
-  // Calories burned per second
-  final double _caloriesPerSecond = 0.1;
+  late int _selectedDurationInSeconds;
+  bool _isRunning = false;
+  double _caloriesPerSecond = 0.1;
+  
+  // List of duration options in minutes
+  final List<int> _durationOptions = [1, 2, 3, 4, 5];
+  
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with the saved duration for this body part
+    _selectedDurationInSeconds = BodyPartTimerPreferences.timerDurations[widget.bodyPart] ?? 60;
+  }
 
   @override
   Widget build(BuildContext context) {
-    double progress = _elapsedSeconds / _totalDurationInSeconds;
+    double progress = _elapsedSeconds / _selectedDurationInSeconds;
     double caloriesBurned = _elapsedSeconds * _caloriesPerSecond;
 
     return Scaffold(
@@ -136,54 +189,93 @@ class _ExercisePageState extends State<ExercisePage> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Image.asset(
-              // Replace with the actual exercise GIF
               'assets/images/pushup.gif',
               width: 200,
               height: 200,
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(
+                  Icons.fitness_center,
+                  size: 150,
+                  color: Colors.blue,
+                );
+              },
             ),
           ),
           SizedBox(height: 20),
           Text(
-            widget.exerciseName,
+            "${widget.bodyPart} Exercise",
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
           SizedBox(height: 20),
+          
+          // Timer duration selector
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Set Timer (minutes): ',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              DropdownButton<int>(
+                value: _selectedDurationInSeconds ~/ 60,
+                onChanged: _isRunning ? null : (int? value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedDurationInSeconds = value * 60;
+                      // Save the selected duration for this body part
+                      BodyPartTimerPreferences.timerDurations[widget.bodyPart] = value * 60;
+                    });
+                  }
+                },
+                items: _durationOptions.map<DropdownMenuItem<int>>((int value) {
+                  return DropdownMenuItem<int>(
+                    value: value,
+                    child: Text('$value'),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          
+          // Timer display
           Container(
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white, width: 2),
+              border: Border.all(color: Colors.blue, width: 2),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Column(
               children: [
                 Text(
-                  '${_elapsedSeconds ~/ 60}:${_elapsedSeconds % 60}',
+                  '${_formatTime(_elapsedSeconds)} / ${_formatTime(_selectedDurationInSeconds)}',
                   style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
                     color: Colors.blue,
                   ),
                 ),
-                SizedBox(width: 10),
+                SizedBox(height: 10),
                 Container(
-                  width: 150,
+                  width: 300,
                   height: 20,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    gradient: LinearGradient(
-                      colors: [Colors.blue, Colors.lightBlue],
-                    ),
+                    color: Colors.grey[300],
                   ),
                   child: FractionallySizedBox(
-                    widthFactor: progress,
+                    alignment: Alignment.centerLeft,
+                    widthFactor: progress.clamp(0.0, 1.0),
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        color: Colors.white,
+                        color: Colors.blue,
                       ),
                     ),
                   ),
@@ -191,12 +283,36 @@ class _ExercisePageState extends State<ExercisePage> {
               ],
             ),
           ),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              _startTimer();
-            },
-            child: Text('Start'),
+          SizedBox(height: 30),
+          
+          // Start/Stop buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: _isRunning ? null : _startTimer,
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  backgroundColor: Colors.green,
+                ),
+                child: Text(
+                  'Start',
+                  style: TextStyle(fontSize: 20),
+                ),
+              ),
+              SizedBox(width: 30),
+              ElevatedButton(
+                onPressed: _isRunning ? _stopTimer : null,
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  backgroundColor: Colors.red,
+                ),
+                child: Text(
+                  'Stop',
+                  style: TextStyle(fontSize: 20),
+                ),
+              ),
+            ],
           ),
           SizedBox(height: 20),
           Text(
@@ -210,22 +326,49 @@ class _ExercisePageState extends State<ExercisePage> {
     );
   }
 
+  // Format seconds into MM:SS
+  String _formatTime(int seconds) {
+    int minutes = seconds ~/ 60;
+    int remainingSeconds = seconds % 60;
+    return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
   void _startTimer() {
+    setState(() {
+      _isRunning = true;
+      // Reset elapsed time if restarting
+      if (_elapsedSeconds >= _selectedDurationInSeconds) {
+        _elapsedSeconds = 0;
+      }
+    });
+
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
-        if (_elapsedSeconds < _totalDurationInSeconds) {
+        if (_elapsedSeconds < _selectedDurationInSeconds) {
           _elapsedSeconds++;
         } else {
-          _timer.cancel();
+          _stopTimer();
+          // Call the callback with calories burned
           widget.onCaloriesBurned(_elapsedSeconds * _caloriesPerSecond);
         }
       });
     });
   }
 
+  void _stopTimer() {
+    if (_timer != null) {
+      _timer!.cancel();
+      setState(() {
+        _isRunning = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
-    _timer.cancel();
+    if (_timer != null) {
+      _timer!.cancel();
+    }
     super.dispose();
   }
 }

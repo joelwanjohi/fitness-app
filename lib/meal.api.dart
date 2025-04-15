@@ -3,8 +3,8 @@ import 'package:http/http.dart' as http;
 
 class MealApi {
   static const String _baseUrl =
-      'https://nutrition-by-api-ninjas.p.rapidapi.com/v1/nutrition';
-  static const String _apiKey = 'd8bb8cd957msh4f341a92d5d6668p13aa5fjsn4e6ce205f74e';
+      'https://api.spoonacular.com/recipes/parseIngredients';
+  static const String _apiKey = '77c136162da84d17a61a4de056d86989';
 
   static Future<Map<String, dynamic>> fetchNutritionInfo(String query) async {
     final response = await http.get(
