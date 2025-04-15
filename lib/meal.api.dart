@@ -11,7 +11,7 @@ class MealApi {
       throw Exception('GEMINI_API_KEY not found in .env file');
     }
 
-    final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=$_apiKey');
+final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=$_apiKey');
 
     try {
       final response = await http.post(

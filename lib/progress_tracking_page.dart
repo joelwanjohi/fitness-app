@@ -161,7 +161,7 @@ class _ProgressTrackingPageState extends State<ProgressTrackingPage> {
         : _prepareInitialRequest(base64Image);
 
     // Create API endpoint URL
-    final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=$apiKey');
+final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey');
 
     try {
       final response = await http.post(
