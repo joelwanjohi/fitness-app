@@ -1,3 +1,5 @@
+import 'package:fitness_app/meal.dart';
+
 class MealPlanEntry {
   final String id;
   final String name;
