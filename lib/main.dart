@@ -4,11 +4,15 @@ import 'package:fitness_app/onboarding_screen.dart';
 import 'package:fitness_app/progress_tracking_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main()async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 👇 Initialize Firebase with generated options
+
+  await dotenv.load(fileName: ".env");
+  
+ 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

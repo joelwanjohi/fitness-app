@@ -1,16 +1,13 @@
 class Recipe {
   final String name;
-  final num calories;
-  final num serving_size_g;
-  final num fat_total_g;
-  final num fat_saturated_g;
-  final num protein_g;
-  final num sodium_mg;
-  final num potassium_mg;
-  final num cholesterol_mg;
-  final num carbohydrates_total_g;
-  final num fiber_g;
-  final num sugar_g;
+  final double calories;
+  final double serving_size_g;
+  final double fat_total_g;
+  final double fat_saturated_g;
+  final double protein_g;
+  final double sodium_mg;
+  final double potassium_mg;
+  final double sugar_g;
 
   Recipe({
     required this.name,
@@ -21,35 +18,35 @@ class Recipe {
     required this.protein_g,
     required this.sodium_mg,
     required this.potassium_mg,
-    required this.cholesterol_mg,
-    required this.carbohydrates_total_g,
-    required this.fiber_g,
     required this.sugar_g,
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
     return Recipe(
-      name: json['name'] as String,
-      calories: json['calories'],
-      serving_size_g: json['serving_size_g'],
-      fat_total_g: json['fat_total_g'],
-      fat_saturated_g: json['fat_saturated_g'],
-      protein_g: json['protein_g'],
-      sodium_mg: json['sodium_mg'],
-      potassium_mg: json['potassium_mg'],
-      cholesterol_mg: json['cholesterol_mg'],
-      carbohydrates_total_g: json['carbohydrates_total_g'],
-      fiber_g: json['fiber_g'],
-      sugar_g: json['sugar_g'],
+      name: json['name'] ?? 'Unknown Food',
+      calories: _parseDoubleOrZero(json['calories']),
+      serving_size_g: _parseDoubleOrZero(json['serving_size_g']),
+      fat_total_g: _parseDoubleOrZero(json['fat_total_g']),
+      fat_saturated_g: _parseDoubleOrZero(json['fat_saturated_g']),
+      protein_g: _parseDoubleOrZero(json['protein_g']),
+      sodium_mg: _parseDoubleOrZero(json['sodium_mg']),
+      potassium_mg: _parseDoubleOrZero(json['potassium_mg']),
+      sugar_g: _parseDoubleOrZero(json['sugar_g']),
     );
   }
 
-
-
-
-List<Recipe> recipesFromSnapshot(List snapshot) {
-    return snapshot.map((data) {
-      return Recipe.fromJson(data);
-    }).toList();
+  // Helper method to safely parse doubles
+  static double _parseDoubleOrZero(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      try {
+        return double.parse(value);
+      } catch (_) {
+        return 0.0;
+      }
+    }
+    return 0.0;
   }
 }
