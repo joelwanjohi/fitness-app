@@ -1,3 +1,4 @@
+import 'package:fitness_app/meal/meal_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'meal_card.dart';
@@ -73,12 +74,22 @@ class _MealPageState extends State<MealPage> {
       _totalProtein += _recipe!.protein_g;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${_recipe!.name} added to your meal plan'),
-        backgroundColor: Colors.green,
-      ),
-    );
+ScaffoldMessenger.of(context).showSnackBar(
+  SnackBar(
+    content: Text('${_recipe!.name} added to your meal plan'),
+    backgroundColor: Colors.green,
+    duration: Duration(seconds: 2),
+  ),
+);
+
+// Navigate to MealPlanPage after a short delay
+Future.delayed(Duration(seconds: 2), () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => const MealPlanPage()),
+  );
+});
+
   }
 
   @override
