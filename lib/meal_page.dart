@@ -1,5 +1,4 @@
 import 'package:fitness_app/meal/meal_page.dart';
-import 'package:fitness_app/meal/meal_plan_page.dart'; // <-- Make sure this is your actual meal plan page path
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'meal_card.dart';
