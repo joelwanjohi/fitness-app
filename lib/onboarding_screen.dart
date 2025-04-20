@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Add this import
 import 'size_config.dart';
 import 'home.dart';
 import 'onboarding_contents.dart';
 import 'loginpage.dart';
 import 'workout_page.dart';
-
+import 'package:shared_preferences/shared_preferences.dart'; // Add this import
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
+  final VoidCallback? onFinish; // Add this callback parameter
+  
+  const OnboardingScreen({Key? key, this.onFinish}) : super(key: key);
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -28,6 +31,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     Color(0xff000000),
     Color(0xff000000),
   ];
+
+  // This function will mark onboarding as completed
+  Future<void> _completeOnboarding() async {
+    // Save that onboarding has been completed
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
+    
+    // Call the callback if provided
+    if (widget.onFinish != null) {
+      widget.onFinish!();
+    }
+    
+    // Check if user is already logged in
+    if (FirebaseAuth.instance.currentUser != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    }
+  }
 
   AnimatedContainer _buildDots({
     int? index,
@@ -122,12 +150,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ? Padding(
                           padding: const EdgeInsets.all(30),
                           child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                  context,
-                                MaterialPageRoute(builder: (context) => LoginPage()),
-                              );
-                            },
+                            onPressed: _completeOnboarding, // Use the new function
                             child: const Text("START"),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,

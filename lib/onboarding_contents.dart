@@ -1,4 +1,3 @@
-
 class OnboardingContents {
   final String title;
   final String image;

@@ -29,6 +29,16 @@ class BodyPartTimerPreferences {
     'Biceps': 60,   // Default 1 minute
     'Neck': 60,     // Default 1 minute
   };
+  
+  // Map body parts to specific exercise GIF paths
+  static final Map<String, String> exerciseGifs = {
+    'Chest': 'assets/images/pushup.gif',
+    'Legs': 'assets/images/legs.gif',
+    'Abs': 'assets/images/pushup.gif',
+    'Shoulder': 'assets/images/pullup.gif',
+    'Biceps': 'assets/images/pushup.gif',
+    'Neck': 'assets/images/neck.gif',
+  };
 }
 
 class WorkoutPage extends StatefulWidget {
@@ -174,6 +184,9 @@ class _ExercisePageState extends State<ExercisePage> {
   Widget build(BuildContext context) {
     double progress = _elapsedSeconds / _selectedDurationInSeconds;
     double caloriesBurned = _elapsedSeconds * _caloriesPerSecond;
+    
+    // Get the specific GIF for this body part
+    String gifAsset = BodyPartTimerPreferences.exerciseGifs[widget.bodyPart] ?? 'assets/images/pushup.gif';
 
     return Scaffold(
       appBar: AppBar(
@@ -189,14 +202,24 @@ class _ExercisePageState extends State<ExercisePage> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Image.asset(
-              'assets/images/pushup.gif',
+              gifAsset, // Use the body part specific GIF
               width: 200,
               height: 200,
               errorBuilder: (context, error, stackTrace) {
-                return Icon(
-                  Icons.fitness_center,
-                  size: 150,
-                  color: Colors.blue,
+                print('Error loading GIF for ${widget.bodyPart}: $error');
+                return Column(
+                  children: [
+                    Icon(
+                      Icons.fitness_center,
+                      size: 100,
+                      color: Colors.blue,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'GIF not found',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ],
                 );
               },
             ),
@@ -397,20 +420,20 @@ class ProgressBar extends StatelessWidget {
           height: 20,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            gradient: LinearGradient(
-              colors: [Colors.blue, Colors.lightBlue],
-            ),
+            color: Colors.grey[200],
           ),
           child: Stack(
             children: [
               Positioned.fill(
                 child: FractionallySizedBox(
                   alignment: Alignment.centerLeft,
-                  widthFactor: progress,
+                  widthFactor: progress.clamp(0.0, 1.0),
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: Colors.white,
+                      gradient: LinearGradient(
+                        colors: [Colors.blue, Colors.lightBlue],
+                      ),
                     ),
                   ),
                 ),
