@@ -1,9 +1,14 @@
 import 'package:fitness_app/meal/meal_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'meal_card.dart';
 import 'meal.dart';
 import 'meal.api.dart';
+import 'package:fitness_app/meal/meal_plan_model.dart';
+
+import 'package:fitness_app/meal/mealplan_db_service.dart';
 
 class MealPage extends StatefulWidget {
   const MealPage({Key? key}) : super(key: key);
@@ -19,6 +24,7 @@ class _MealPageState extends State<MealPage> {
   double _totalProtein = 0.0;
   bool _isLoading = false;
   String? _errorMessage;
+  String _selectedMealType = 'Breakfast'; // Default value
 
   @override
   void initState() {
@@ -57,7 +63,7 @@ class _MealPageState extends State<MealPage> {
     }
   }
 
-  void _addCurrentMeal() {
+  void _addCurrentMeal() async {
     if (_recipe == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -69,24 +75,102 @@ class _MealPageState extends State<MealPage> {
     }
 
     setState(() {
-      _totalCalories += _recipe!.calories;
-      _totalProtein += _recipe!.protein_g;
+      _isLoading = true; // Show loading indicator
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${_recipe!.name} added to your meal plan'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
+    try {
+      // Create a MealPlanEntry using the selected meal type
+      final mealPlanEntry = MealPlanEntry.fromRecipe(_recipe!, _selectedMealType);
+      
+      print('Creating meal plan entry: ${mealPlanEntry.name}, Type: ${mealPlanEntry.mealType}');
+      
+      // Use the Firebase service to add the meal to the plan
+      final MealPlanService mealPlanService = MealPlanService();
+      final String mealId = await mealPlanService.addMealToPlan(mealPlanEntry);
+      
+      print('Successfully saved meal with ID: $mealId');
+      
+      // Update local state
+      setState(() {
+        _totalCalories += _recipe!.calories;
+        _totalProtein += _recipe!.protein_g;
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${_recipe!.name} added as $_selectedMealType'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      Future.delayed(Duration(seconds: 2), () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MealPlanPage()),
+        );
+      });
+    } catch (e) {
+      print('Error adding meal to plan: $e');
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to add meal to plan: ${e.toString()}';
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Widget _buildMealTypeSelector() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Meal Type:',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedMealType,
+                isExpanded: true,
+                items: ['Breakfast', 'Lunch', 'Dinner', 'Snack']
+                    .map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _selectedMealType = newValue;
+                    });
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
-
-    Future.delayed(Duration(seconds: 2), () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const MealPlanPage()),
-      );
-    });
   }
 
   @override
@@ -153,6 +237,8 @@ class _MealPageState extends State<MealPage> {
 
             if (_recipe != null) ...[
               RecipeCard(recipe: _recipe!),
+              SizedBox(height: 20),
+              _buildMealTypeSelector(), // Add meal type selector
               SizedBox(height: 20),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32),

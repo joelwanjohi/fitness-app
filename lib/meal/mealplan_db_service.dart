@@ -6,19 +6,22 @@ class MealPlanService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Reference to the meal plans collection
-  CollectionReference get _mealPlansCollection {
-    final userId = _auth.currentUser?.uid;
-    if (userId == null) {
-      throw Exception('User not authenticated');
-    }
-    return _firestore.collection('users').doc(userId).collection('mealPlans');
+// Reference to the meal plans collection
+CollectionReference get _mealPlansCollection {
+  final userId = _auth.currentUser?.uid;
+  if (userId == null) {
+    throw Exception('User not authenticated');
   }
+  // Change 'users' to 'Users' to match your signup code
+  return _firestore.collection('Users').doc(userId).collection('mealPlans');
+}
 
   // Add a meal to the meal plan
   Future<String> addMealToPlan(MealPlanEntry meal) async {
     try {
+      print('Adding meal to Firebase: ${meal.name}, Type: ${meal.mealType}, Date: ${meal.dateAdded}');
       final docRef = await _mealPlansCollection.add(meal.toJson());
+      print('Meal added with ID: ${docRef.id}');
       return docRef.id;
     } catch (e) {
       print('Error adding meal to plan: $e');
@@ -32,13 +35,18 @@ class MealPlanService {
       // Normalize date to start and end of day for query
       final startDate = DateTime(date.year, date.month, date.day);
       final endDate = DateTime(date.year, date.month, date.day, 23, 59, 59);
+      
+      print('Querying meals between: ${startDate.toIso8601String()} and ${endDate.toIso8601String()}');
+      print('Timestamps: ${startDate.millisecondsSinceEpoch} - ${endDate.millisecondsSinceEpoch}');
 
       // Query meals between start and end of the specified day
       final querySnapshot = await _mealPlansCollection
           .where('dateAdded', isGreaterThanOrEqualTo: startDate.millisecondsSinceEpoch)
           .where('dateAdded', isLessThanOrEqualTo: endDate.millisecondsSinceEpoch)
           .get();
-
+          
+      print('Found ${querySnapshot.docs.length} meals for selected date');
+      
       return querySnapshot.docs
           .map((doc) => MealPlanEntry.fromJson(doc.id, doc.data() as Map<String, dynamic>))
           .toList();
@@ -55,6 +63,8 @@ class MealPlanService {
       final now = DateTime.now();
       final startOfWeek = now.subtract(Duration(days: now.weekday % 7));
       final endOfWeek = startOfWeek.add(Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+      
+      print('Querying meals for week: ${startOfWeek.toIso8601String()} to ${endOfWeek.toIso8601String()}');
 
       final querySnapshot = await _mealPlansCollection
           .where('dateAdded', isGreaterThanOrEqualTo: startOfWeek.millisecondsSinceEpoch)
@@ -74,7 +84,9 @@ class MealPlanService {
   // Delete a meal from the plan
   Future<void> deleteMealFromPlan(String mealId) async {
     try {
+      print('Deleting meal with ID: $mealId');
       await _mealPlansCollection.doc(mealId).delete();
+      print('Successfully deleted meal');
     } catch (e) {
       print('Error deleting meal: $e');
       throw Exception('Failed to delete meal: $e');

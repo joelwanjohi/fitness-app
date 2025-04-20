@@ -1,5 +1,6 @@
 import 'package:fitness_app/meal/meal_plan_model.dart';
 import 'package:fitness_app/meal/mealplan_db_service.dart';
+import 'package:fitness_app/meal/meal_page.dart';
 import 'package:fitness_app/meal_page.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -27,6 +28,8 @@ class _MealPlanPageState extends State<MealPlanPage> {
   }
 
   Future<void> _loadMealsForSelectedDate() async {
+    print('Loading meals for date: ${_selectedDay.toString()}');
+    
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -34,11 +37,18 @@ class _MealPlanPageState extends State<MealPlanPage> {
 
     try {
       final meals = await _mealPlanService.getMealsForDate(_selectedDay);
+      
+      print('Successfully loaded ${meals.length} meals');
+      for (var meal in meals) {
+        print('Meal: ${meal.name}, Type: ${meal.mealType}, Date: ${meal.dateAdded}');
+      }
+      
       setState(() {
         _meals = meals;
         _isLoading = false;
       });
     } catch (e) {
+      print('Error loading meals: $e');
       setState(() {
         _errorMessage = 'Failed to load meals: ${e.toString()}';
         _isLoading = false;
@@ -259,6 +269,7 @@ class _MealPlanPageState extends State<MealPlanPage> {
       },
       onDismissed: (direction) async {
         try {
+          print('Deleting meal: ${meal.id}');
           await _mealPlanService.deleteMealFromPlan(meal.id);
           setState(() {
             _meals.removeWhere((m) => m.id == meal.id);
@@ -270,6 +281,7 @@ class _MealPlanPageState extends State<MealPlanPage> {
             ),
           );
         } catch (e) {
+          print('Error deleting meal: $e');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to remove meal: ${e.toString()}'),
