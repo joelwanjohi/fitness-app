@@ -1,123 +1,147 @@
 import 'package:flutter/material.dart';
-import 'package:charts_flutter_new/flutter.dart' as charts;
-
+import 'package:syncfusion_flutter_charts/charts.dart';
 import '../models/user_activity.dart';
 
 class ActivityChart extends StatelessWidget {
   final List<UserActivity> activityData;
   final String chartType;
   final bool stackedView;
-  
+
   const ActivityChart({
     Key? key,
     required this.activityData,
     this.chartType = 'line',
     this.stackedView = false,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     // Reverse list to show oldest first
     final displayData = activityData.reversed.toList();
-    
-    // Series for different activities
-    final mealSeries = charts.Series<UserActivity, DateTime>(
-      id: 'Meals',
-      colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
-      domainFn: (UserActivity activity, _) => activity.date,
-      measureFn: (UserActivity activity, _) => activity.mealEntries,
-      data: displayData,
-    );
-    
-    final workoutSeries = charts.Series<UserActivity, DateTime>(
-      id: 'Workouts',
-      colorFn: (_, __) => charts.MaterialPalette.purple.shadeDefault,
-      domainFn: (UserActivity activity, _) => activity.date,
-      measureFn: (UserActivity activity, _) => activity.workoutEntries,
-      data: displayData,
-    );
-    
-    final progressSeries = charts.Series<UserActivity, DateTime>(
-      id: 'Progress',
-      colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
-      domainFn: (UserActivity activity, _) => activity.date,
-      measureFn: (UserActivity activity, _) => activity.progressEntries,
-      data: displayData,
-    );
-    
-    final newUsersSeries = charts.Series<UserActivity, DateTime>(
-      id: 'New Users',
-      colorFn: (_, __) => charts.MaterialPalette.red.shadeDefault,
-      domainFn: (UserActivity activity, _) => activity.date,
-      measureFn: (UserActivity activity, _) => activity.newUsers,
-      data: displayData,
-    );
-    
-    final seriesList = [mealSeries, workoutSeries, progressSeries, newUsersSeries];
-    
-    // Create the appropriate chart based on selected type
+
+    final List<ChartData> mealData = displayData.map((activity) =>
+        ChartData(activity.date, activity.mealEntries.toDouble())).toList();
+    final List<ChartData> workoutData = displayData.map((activity) =>
+        ChartData(activity.date, activity.workoutEntries.toDouble())).toList();
+    final List<ChartData> progressData = displayData.map((activity) =>
+        ChartData(activity.date, activity.progressEntries.toDouble())).toList();
+    final List<ChartData> newUsersData = displayData.map((activity) =>
+        ChartData(activity.date, activity.newUsers.toDouble())).toList();
+
+    // Create series list (using CartesianSeries instead of ChartSeries)
+    List<CartesianSeries<ChartData, DateTime>> seriesList = [
+      LineSeries<ChartData, DateTime>(
+        dataSource: mealData,
+        xValueMapper: (ChartData data, _) => data.date,
+        yValueMapper: (ChartData data, _) => data.value,
+        name: 'Meals',
+        color: Colors.blue,
+      ),
+      LineSeries<ChartData, DateTime>(
+        dataSource: workoutData,
+        xValueMapper: (ChartData data, _) => data.date,
+        yValueMapper: (ChartData data, _) => data.value,
+        name: 'Workouts',
+        color: Colors.purple,
+      ),
+      LineSeries<ChartData, DateTime>(
+        dataSource: progressData,
+        xValueMapper: (ChartData data, _) => data.date,
+        yValueMapper: (ChartData data, _) => data.value,
+        name: 'Progress',
+        color: Colors.green,
+      ),
+      LineSeries<ChartData, DateTime>(
+        dataSource: newUsersData,
+        xValueMapper: (ChartData data, _) => data.date,
+        yValueMapper: (ChartData data, _) => data.value,
+        name: 'New Users',
+        color: Colors.red,
+      ),
+    ];
+
+    // Based on chartType, return different chart types
     switch (chartType) {
       case 'bar':
-        return charts.TimeSeriesChart(
-          seriesList,
-          animate: true,
-          dateTimeFactory: const charts.LocalDateTimeFactory(),
-          defaultRenderer: charts.BarRendererConfig<DateTime>(
-            groupingType: stackedView
-                ? charts.BarGroupingType.stacked
-                : charts.BarGroupingType.grouped,
-            strokeWidthPx: 1.0,
-          ),
-          behaviors: [
-            charts.SeriesLegend(
-              position: charts.BehaviorPosition.bottom,
-              outsideJustification: charts.OutsideJustification.middleDrawArea,
-              horizontalFirst: true,
-              desiredMaxRows: 2,
-              cellPadding: EdgeInsets.only(right: 16, bottom: 4),
+        return SfCartesianChart(
+          primaryXAxis: DateTimeAxis(),
+          primaryYAxis: NumericAxis(),
+          series: <CartesianSeries>[
+            ColumnSeries<ChartData, DateTime>(
+              dataSource: mealData,
+              xValueMapper: (ChartData data, _) => data.date,
+              yValueMapper: (ChartData data, _) => data.value,
+              name: 'Meals',
             ),
-            charts.PanAndZoomBehavior(),
+            ColumnSeries<ChartData, DateTime>(
+              dataSource: workoutData,
+              xValueMapper: (ChartData data, _) => data.date,
+              yValueMapper: (ChartData data, _) => data.value,
+              name: 'Workouts',
+            ),
+            ColumnSeries<ChartData, DateTime>(
+              dataSource: progressData,
+              xValueMapper: (ChartData data, _) => data.date,
+              yValueMapper: (ChartData data, _) => data.value,
+              name: 'Progress',
+            ),
+            ColumnSeries<ChartData, DateTime>(
+              dataSource: newUsersData,
+              xValueMapper: (ChartData data, _) => data.date,
+              yValueMapper: (ChartData data, _) => data.value,
+              name: 'New Users',
+            ),
           ],
         );
       case 'area':
-        return charts.TimeSeriesChart(
-          seriesList,
-          animate: true,
-          dateTimeFactory: const charts.LocalDateTimeFactory(),
-          defaultRenderer: charts.LineRendererConfig(
-            includeArea: true,
-            stacked: stackedView,
-            includeLine: true,
-          ),
-          behaviors: [
-            charts.SeriesLegend(
-              position: charts.BehaviorPosition.bottom,
-              outsideJustification: charts.OutsideJustification.middleDrawArea,
-              horizontalFirst: true,
-              desiredMaxRows: 2,
-              cellPadding: EdgeInsets.only(right: 16, bottom: 4),
+        return SfCartesianChart(
+          primaryXAxis: DateTimeAxis(),
+          primaryYAxis: NumericAxis(),
+          series: <CartesianSeries>[
+            AreaSeries<ChartData, DateTime>(
+              dataSource: mealData,
+              xValueMapper: (ChartData data, _) => data.date,
+              yValueMapper: (ChartData data, _) => data.value,
+              name: 'Meals',
+              opacity: 0.4,
             ),
-            charts.PanAndZoomBehavior(),
+            AreaSeries<ChartData, DateTime>(
+              dataSource: workoutData,
+              xValueMapper: (ChartData data, _) => data.date,
+              yValueMapper: (ChartData data, _) => data.value,
+              name: 'Workouts',
+              opacity: 0.4,
+            ),
+            AreaSeries<ChartData, DateTime>(
+              dataSource: progressData,
+              xValueMapper: (ChartData data, _) => data.date,
+              yValueMapper: (ChartData data, _) => data.value,
+              name: 'Progress',
+              opacity: 0.4,
+            ),
+            AreaSeries<ChartData, DateTime>(
+              dataSource: newUsersData,
+              xValueMapper: (ChartData data, _) => data.date,
+              yValueMapper: (ChartData data, _) => data.value,
+              name: 'New Users',
+              opacity: 0.4,
+            ),
           ],
         );
       case 'line':
       default:
-        return charts.TimeSeriesChart(
-          seriesList,
-          animate: true,
-          dateTimeFactory: const charts.LocalDateTimeFactory(),
-          defaultRenderer: charts.LineRendererConfig(includeLine: true),
-          behaviors: [
-            charts.SeriesLegend(
-              position: charts.BehaviorPosition.bottom,
-              outsideJustification: charts.OutsideJustification.middleDrawArea,
-              horizontalFirst: true,
-              desiredMaxRows: 2,
-              cellPadding: EdgeInsets.only(right: 16, bottom: 4),
-            ),
-            charts.PanAndZoomBehavior(),
-          ],
+        return SfCartesianChart(
+          primaryXAxis: DateTimeAxis(),
+          primaryYAxis: NumericAxis(),
+          series: seriesList,
         );
     }
   }
+}
+
+class ChartData {
+  final DateTime date;
+  final double value;
+
+  ChartData(this.date, this.value);
 }

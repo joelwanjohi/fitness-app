@@ -26,7 +26,6 @@ class BodyPartTimerPreferences {
     'Legs': 60,     // Default 1 minute
     'Abs': 60,      // Default 1 minute
     'Shoulder': 60, // Default 1 minute
-    'Biceps': 60,   // Default 1 minute
     'Neck': 60,     // Default 1 minute
   };
   
@@ -36,7 +35,6 @@ class BodyPartTimerPreferences {
     'Legs': 'assets/images/legs.gif',
     'Abs': 'assets/images/pushup.gif',
     'Shoulder': 'assets/images/pullup.gif',
-    'Biceps': 'assets/images/pushup.gif',
     'Neck': 'assets/images/neck.gif',
   };
 }
@@ -66,7 +64,6 @@ class _WorkoutPageState extends State<WorkoutPage> {
                 _createBodyPartTile(context, 'Legs', Icons.directions_walk),
                 _createBodyPartTile(context, 'Abs', Icons.fitness_center),
                 _createBodyPartTile(context, 'Shoulder', Icons.arrow_upward),
-                _createBodyPartTile(context, 'Biceps', Icons.fitness_center),
                 _createBodyPartTile(context, 'Neck', Icons.accessibility_new),
               ],
             ),

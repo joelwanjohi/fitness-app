@@ -3,6 +3,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart'; // Import from your main app
 import 'auth/admin_check_wrapper.dart';
+import 'package:fitness_admin_dashboard/shared/ charts_compat.dart';
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
